@@ -15,6 +15,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv(find_dotenv())
 app = FastAPI()
+Port = 8001
+
 
 #Enable CORS for frontend in (adjust domains in production)
 app.add_middleware(
@@ -24,23 +26,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-Port = 8001
+
+
+# Initialize OpenAI client
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise RuntimeError("OPENAI_API_KEY environment variable not set")
 openai = OpenAI(api_key=api_key)
 
+# Pydantic models for request bodies
 class Message(BaseModel):
     session_id: str
     content: Union[str, dict, list]
     user_id: Optional[str] = None
 
-
+# Fallback model to accept either input_as_text or messages
 class ChatFallbackPayload(BaseModel):
     input_as_text: Optional[str] = None
     messages: Optional[List[Any]] = None
 
-
+# Main chat endpoint supporting flexible input formats
 @app.post("/chat")
 async def chat(payload: ChatFallbackPayload):
     try:
@@ -99,6 +104,7 @@ async def chat(payload: ChatFallbackPayload):
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
 
+# Alias for backward compatibility with frontend expecting /api/chat
 @app.post("/api/chat")
 async def api_chat(payload: ChatFallbackPayload):
     """Alias for backward compatibility with frontend expecting /api/chat."""
@@ -106,7 +112,7 @@ async def api_chat(payload: ChatFallbackPayload):
     return await chat(payload)
 
 
-
+# ChatKit message endpoint
 @app.post("/api/chatkit/message")
 async def send_message(message: Message):
     try:
@@ -147,15 +153,18 @@ async def send_message(message: Message):
         logging.error(f"Error handling message: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# ChatKit session creation endpoint
 @app.post("/api/chatkit/session")
 def create_chatkit_session():
     try:
         logging.info("Creating ChatKit session...")
         
-        # Create session with workflow ID as string (not object)
+        # Pass workflow as an object with id property
         session = openai.beta.chatkit.sessions.create(
             user="auto",
-            workflow="wf_69135893f40c819095704afbaed0bf0e0d3e74f0b6d2392c"
+            workflow={
+                "id": "wf_69135893f40c819095704afbaed0bf0e0d3e74f0b6d2392c"
+            }
         )
         
         logging.info(f"Session created: {session.id}")
