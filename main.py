@@ -161,6 +161,7 @@ def create_chatkit_session():
         # Pass workflow as an object with id property
         session = openai.beta.chatkit.sessions.create(
             user="auto",
+            #workflow as an object with id property
             workflow={
                 "id": "wf_69135893f40c819095704afbaed0bf0e0d3e74f0b6d2392c"
             }
