@@ -7,7 +7,6 @@ import logging
 import asyncio
 from workflow import run_workflow, WorkflowInput
 from dotenv import load_dotenv, find_dotenv
-from dotenv import load_dotenv, find_dotenv
 from typing import Optional, List, Any, Union
 
 # Configure logging to see detailed errors
