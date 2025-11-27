@@ -16,7 +16,7 @@ dict=Dict
 
 router = APIRouter()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+top_k_val= int(os.getenv("TOP_K",5))
 
 
 # Define the request model
@@ -37,11 +37,11 @@ def agent_answer(req: Message):
     # 1) query embedding
     q_emb = embed_text(q)
 
-    # 2) pinecone search (filter by user_id if desired)
+    # 2) pinecone search 
     # include_metadata True to get stored snippet
     results = index.query(
         vector=q_emb,
-        top_k=5,
+        top_k=top_k_val,
         include_metadata=True,
         namespace=user_ns   # ← ADD THIS
     )

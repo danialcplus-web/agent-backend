@@ -34,7 +34,7 @@ async def agent_answer(user_id: str, question: str):
     # Pass context + question to your LLM
     prompt = f"Context:\n{context}\n\nQuestion: {question}"
     response = await openai.chat.completions.create(
-        model="gpt-4.1",
+        model="gpt-5.1",
         messages=[{"role": "user", "content": prompt}],
         temperature=0
     )
