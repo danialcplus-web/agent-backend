@@ -5,6 +5,7 @@ from typing import Optional, Tuple, List
 import fitz  # PyMuPDF
 import docx
 import pandas as pd
+import pptx
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,20 @@ def extract_text_from_csv_bytes(b: bytes) -> str:
             return b.decode("utf-8", errors="ignore")
         except:
             return ""
+        
+def extract_text_from_pptx_bytes(b: bytes) -> str:
+    try:
+        bio = io.BytesIO(b)
+        presentation = pptx.Presentation(bio)
+        text_runs = []
+        for slide in presentation.slides:
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text_runs.append(shape.text)
+        return "\n\n".join(text_runs)
+    except Exception as e:
+        logger.exception("PPTX extraction failed: %s", e)
+        return ""
 
 def extract_text_from_file_bytes(filename: str, content_bytes: Optional[bytes] = None ) -> str:
     #fname = filename.filename
@@ -58,6 +73,10 @@ def extract_text_from_file_bytes(filename: str, content_bytes: Optional[bytes] =
         return extract_text_from_docx_bytes(content_bytes)
     if lower.endswith(".csv"):
         return extract_text_from_csv_bytes(content_bytes)
+    if lower.endswith(".txt"):
+        return extract_text_from_txt_bytes(content_bytes)
+    if lower.endswith(".pptx") or lower.endswith(".ppt"):
+        return extract_text_from_pptx_bytes(content_bytes)
     # default
     try:
         return content_bytes.decode("utf-8", errors="ignore")
