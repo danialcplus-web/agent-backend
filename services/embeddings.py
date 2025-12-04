@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def embed_text(text: str):
+def embed_text(text: str, file_name: str = "") -> List[float]:
     response =client.embeddings.create(model=embedding_model, input=text)
     return response.data[0].embedding
 
@@ -43,7 +43,7 @@ def chunk_text(text: str, max_tokens=400):
 
     return chunks
 
-def store_chunks_in_pinecone(chunks, doc_name):
+def store_chunks_in_pinecone(chunks, file_name, user_id, doc_name):
     for chunk in chunks:
         emb = create_embeddings(chunk)
         vector_id = str(uuid.uuid4())
@@ -55,7 +55,8 @@ def store_chunks_in_pinecone(chunks, doc_name):
                     vectors=[
                         {"id": vector_id,
                         "values": emb,
-                        "metadata": {"text": chunk}
+                        "metadata": {"text": chunk,
+                                     "file_name": file_name}
                         }],
                     namespace=user_id  
                     )

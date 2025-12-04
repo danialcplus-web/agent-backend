@@ -34,24 +34,38 @@ def agent_answer(req: Message):
         raise HTTPException(status_code=400, detail="user_id is required")
 
 
-    # 1) query embedding
+    # 1 query embedding
     q_emb = embed_text(q)
 
-    # 2) pinecone search 
+    # 2 pinecone search 
     # include_metadata True to get stored snippet
     results = index.query(
         vector=q_emb,
         top_k=top_k_val,
         include_metadata=True,
-        namespace=user_ns   # ← ADD THIS
+        namespace=user_ns  
     )
 
 
     # 3) build context (concatenate top matches)
     matches = results.get("matches", [])
-    context = "\n\n".join([m["metadata"].get("text""file_name") for m in matches])
+    context_parts = []
+    
+    for match in matches:
+        filename = match["metadata"].get("file_name") or ""
+        text = match["metadata"].get("text") or ""
 
-    # 4) prompt the LLM (GPT-5.1)
+        if not filename and not text:
+            continue  # skip empty entries
+
+    # combine filename + content per document
+        entry = f"{filename}\n{text}"
+        context_parts.append(entry)
+
+# join each file+content block with clear spacing
+    context = "\n\n\n".join(context_parts)
+
+    # 4) prompt the LLM 
     system_prompt = (
         "You are a helpful assistant. Use ONLY the provided context to answer. "
         "If the answer is not present, say \"I don't see this in uploaded documents.\""
@@ -60,8 +74,10 @@ def agent_answer(req: Message):
     prompt = f"{system_prompt}\n\nCONTEXT:\n{context}\n\nQUESTION:\n{q}"
 
     response = client.responses.create(model="gpt-5.1", input=prompt)
+    print("context_used:", context)
 
     return {
         "session_id": req.session_id,
-        "message": response.output_text
+        "message": response.output_text,
+        
     }

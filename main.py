@@ -10,7 +10,7 @@ from middleware.auth import SupabaseAuthMiddleware
 from supabase import create_client, Client
 from routes.agent import router as agent_router
 from routes.documents import router as documents_router
-
+from routes.chat_to_ppt import router as chat_to_ppt_router
 
 # Configure logging to see detailed errors
 logging.basicConfig(level=logging.DEBUG)
@@ -33,6 +33,8 @@ app.add_middleware(
 
 # Initialize OpenAI client
 api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY environment variable not set")
 openai = OpenAI(api_key=api_key)
 
 # Initialize Supabase client
@@ -62,7 +64,7 @@ class UploadDocumentToolInput(BaseModel):
 app.include_router(documents_router)
 #app.include_router(vector_router)
 app.include_router(agent_router)
-   
+app.include_router(chat_to_ppt_router)
 
 
 # ChatKit message endpoint
