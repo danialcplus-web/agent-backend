@@ -25,3 +25,4 @@ openai         # or your LLM provider client
 tiktoken       # optionally for token counting
 pinecone
 python-jose
+python-pptx
