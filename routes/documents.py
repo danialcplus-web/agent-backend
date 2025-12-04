@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/documents/upload")
-async def upload_document(file: UploadFile, user_id: str = Form(...)):
+async def upload_document(description: str = Form(None), file: UploadFile = Form(...), user_id: str = Form(...)):
 
     content = await file.read()
 
@@ -28,8 +28,13 @@ async def upload_document(file: UploadFile, user_id: str = Form(...)):
         {"content-type": file.content_type},
     )
 
-    # Extract text
+    # Extract text from the uploaded file bytes
     text = extract_text_from_file_bytes(file.filename, content)
+    # If a description was provided, prepend it to the extracted text so it is included in embeddings
+    if description:
+        decs = description
+    else:
+        decs = ""
 
     # Embed & store in Pinecone
     chunks = chunk_text_by_tokens(text)
@@ -48,7 +53,8 @@ async def upload_document(file: UploadFile, user_id: str = Form(...)):
                     "values": embedding.data[0].embedding,
                     "metadata": {
                         "text": chunk_text,
-                        "file_name": file.filename
+                        "file_name": file.filename,
+                        "description": decs
                     }
                 }
             ],

@@ -53,13 +53,14 @@ def agent_answer(req: Message):
     
     for match in matches:
         filename = match["metadata"].get("file_name") or ""
+        description = match["metadata"].get("description") or ""
         text = match["metadata"].get("text") or ""
 
         if not filename and not text:
             continue  # skip empty entries
 
     # combine filename + content per document
-        entry = f"{filename}\n{text}"
+        entry = f"file name:{filename}\ndescription:{description}\ncontent:{text}"
         context_parts.append(entry)
 
 # join each file+content block with clear spacing
